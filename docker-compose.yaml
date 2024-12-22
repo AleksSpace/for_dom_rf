@@ -1,0 +1,42 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    entrypoint: [ "wait-for-it", "db:5432", "--" ]
+    command: >
+      sh -c "alembic -c src/alembic.ini upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000"
+    networks:
+      default:
+        aliases:
+          - app
+
+  db:
+    image: postgres:16
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'qwerty12+'
+      POSTGRES_DB: 'dom_rf'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      default:
+        aliases:
+          - db
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
